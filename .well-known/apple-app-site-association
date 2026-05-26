@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "DWU4N84T4T.com.paulorvm.palpiteiros"
+        ],
+        "components": [
+          {
+            "/": "/join/*"
+          }
+        ]
+      }
+    ]
+  }
+}
