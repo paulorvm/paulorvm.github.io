@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Palpiteiros — Abrindo convite</title>
+    <meta
+      name="description"
+      content="Abra seu convite do bolão no app Palpiteiros ou instale o app para entrar na turma."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #071b14;
+        color: #f3fff8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at top, rgba(29, 122, 86, 0.35), transparent 40%),
+          linear-gradient(180deg, #0a251c 0%, #071b14 100%);
+        padding: 24px;
+      }
+
+      main {
+        width: min(100%, 480px);
+        border-radius: 24px;
+        padding: 28px;
+        background: rgba(10, 34, 25, 0.9);
+        border: 1px solid rgba(140, 185, 168, 0.25);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8cb9a8;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+        line-height: 1.15;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: #d5efe3;
+        line-height: 1.5;
+      }
+
+      .card {
+        margin: 20px 0;
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(31, 106, 77, 0.22);
+        border: 1px solid rgba(140, 185, 168, 0.2);
+      }
+
+      .label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: #8cb9a8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      code {
+        word-break: break-all;
+        font-size: 15px;
+        color: #ffffff;
+      }
+
+      .actions {
+        display: grid;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      a {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 52px;
+        padding: 0 16px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .primary {
+        background: #29a36a;
+        color: #071b14;
+      }
+
+      .secondary {
+        border: 1px solid rgba(140, 185, 168, 0.4);
+        color: #f3fff8;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .muted {
+        margin-top: 20px;
+        font-size: 13px;
+        color: #8cb9a8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Palpiteiros</p>
+      <h1>Abrindo seu convite…</h1>
+      <p id="status">Estamos tentando abrir o app para você entrar no bolão.</p>
+
+      <div class="card">
+        <span class="label">Código do convite</span>
+        <code id="invite-code">carregando…</code>
+      </div>
+
+      <div class="actions">
+        <a id="open-app" class="primary" href="#">Abrir no app</a>
+        <a id="fallback-home" class="secondary" href="../">Ir para a página inicial</a>
+      </div>
+
+      <p class="muted">
+        Se o app não abrir automaticamente, toque no botão acima. Se ainda não tiver o app,
+        publique aqui o link da Play Store ou App Store depois.
+      </p>
+    </main>
+
+    <script>
+      (function () {
+        const pathSegments = window.location.pathname.split("/").filter(Boolean);
+        const joinIndex = pathSegments.indexOf("join");
+        const inviteCodeFromPath = joinIndex >= 0 ? pathSegments[joinIndex + 1] : "";
+        const inviteCodeFromQuery = new URLSearchParams(window.location.search).get("invite") || "";
+        const inviteCode = decodeURIComponent(inviteCodeFromPath || inviteCodeFromQuery || "").trim();
+
+        const statusNode = document.getElementById("status");
+        const inviteCodeNode = document.getElementById("invite-code");
+        const openAppLink = document.getElementById("open-app");
+
+        if (!inviteCode) {
+          statusNode.textContent = "Este convite está incompleto ou inválido.";
+          inviteCodeNode.textContent = "não encontrado";
+          openAppLink.textContent = "Abrir página inicial";
+          openAppLink.href = "../";
+          return;
+        }
+
+        const deepLink = "palpiteiros://join/" + encodeURIComponent(inviteCode);
+        inviteCodeNode.textContent = inviteCode;
+        openAppLink.href = deepLink;
+
+        window.setTimeout(function () {
+          window.location.href = deepLink;
+        }, 120);
+
+        window.setTimeout(function () {
+          statusNode.textContent =
+            "Se o app não abriu, toque em \"Abrir no app\". Depois você pode configurar um fallback para a loja aqui nesta página.";
+        }, 1600);
+      })();
+    </script>
+  </body>
+</html>
