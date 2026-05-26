@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.paulorvm.palpiteiros",
+      "sha256_cert_fingerprints": [
+        "4B:30:8C:59:7C:AE:FE:B2:E3:B5:FD:CB:1E:B6:CD:15:5C:94:FC:67:33:AA:69:74:3C:59:06:00:4B:00:C1:58"
+      ]
+    }
+  }
+]
