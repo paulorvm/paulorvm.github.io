@@ -1,19 +1,111 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Palpiteiros — Vessi Apps</title>
+    <meta
+      name="description"
+      content="Palpiteiros — bolões de palpites entre amigos. Desenvolvido por Vessi Apps."
+    />
+    <link rel="stylesheet" href="assets/site.css" />
   </head>
   <body>
     <main>
-      <h1>Palpiteiros</h1>
-      <p>Desenvolvido por Vessi Apps.</p>
-      <p>
-        <a href="https://paulorvm.github.io/palpiteiros-privacy-policy/"
-          >Política de privacidade</a
-        >
+      <nav aria-label="Language">
+        <ul class="lang-switch">
+          <li><button type="button" data-lang-btn="pt" aria-pressed="true">PT</button></li>
+          <li><button type="button" data-lang-btn="en" aria-pressed="false">EN</button></li>
+          <li><button type="button" data-lang-btn="es" aria-pressed="false">ES</button></li>
+        </ul>
+      </nav>
+
+      <p class="eyebrow" data-i18n="eyebrow">Vessi Apps</p>
+      <h1 data-i18n="heading">Palpiteiros</h1>
+      <p data-i18n="intro">
+        Bolões de palpites entre amigos — crie turmas, envie convites e acompanhe o ranking.
       </p>
+      <p data-i18n="credit">Desenvolvido por Vessi Apps.</p>
+
+      <ul class="links">
+        <li>
+          <a href="support/?lang=pt" data-i18n="linkSupport">Suporte</a>
+        </li>
+        <li>
+          <a
+            href="https://paulorvm.github.io/palpiteiros-privacy-policy/"
+            data-i18n="linkPrivacy"
+            >Política de privacidade</a
+          >
+        </li>
+        <li>
+          <a href="https://apps.apple.com/app/id6770614435" data-i18n="linkIos">App Store (iOS)</a>
+        </li>
+        <li>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros"
+            data-i18n="linkAndroid"
+            >Google Play (Android)</a
+          >
+        </li>
+      </ul>
     </main>
+
+    <script>
+      window.PALPITEIROS_I18N = {
+        pt: {
+          title: "Palpiteiros — Vessi Apps",
+          description:
+            "Palpiteiros — bolões de palpites entre amigos. Desenvolvido por Vessi Apps.",
+          eyebrow: "Vessi Apps",
+          heading: "Palpiteiros",
+          intro:
+            "Bolões de palpites entre amigos — crie turmas, envie convites e acompanhe o ranking.",
+          credit: "Desenvolvido por Vessi Apps.",
+          linkSupport: "Suporte",
+          linkPrivacy: "Política de privacidade",
+          linkIos: "App Store (iOS)",
+          linkAndroid: "Google Play (Android)",
+        },
+        en: {
+          title: "Palpiteiros — Vessi Apps",
+          description:
+            "Palpiteiros — prediction pools with friends. Built by Vessi Apps.",
+          eyebrow: "Vessi Apps",
+          heading: "Palpiteiros",
+          intro:
+            "Prediction pools with friends — create groups, share invites, and follow the leaderboard.",
+          credit: "Built by Vessi Apps.",
+          linkSupport: "Support",
+          linkPrivacy: "Privacy policy",
+          linkIos: "App Store (iOS)",
+          linkAndroid: "Google Play (Android)",
+        },
+        es: {
+          title: "Palpiteiros — Vessi Apps",
+          description:
+            "Palpiteiros — quinielas de pronósticos entre amigos. Desarrollado por Vessi Apps.",
+          eyebrow: "Vessi Apps",
+          heading: "Palpiteiros",
+          intro:
+            "Quinielas de pronósticos entre amigos: crea grupos, comparte invitaciones y sigue el ranking.",
+          credit: "Desarrollado por Vessi Apps.",
+          linkSupport: "Soporte",
+          linkPrivacy: "Política de privacidad",
+          linkIos: "App Store (iOS)",
+          linkAndroid: "Google Play (Android)",
+        },
+      };
+    </script>
+    <script src="assets/site-lang.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var lang = window.PalpiteirosSite && window.PalpiteirosSite.getLang();
+        var supportLink = document.querySelector('a[href^="support/"]');
+        if (supportLink && lang) {
+          supportLink.href = "support/?lang=" + lang;
+        }
+      });
+    </script>
   </body>
 </html>
