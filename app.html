@@ -1,0 +1,11 @@
+<script>
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+  if (/android/i.test(ua)) {
+    window.location.href = "https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros";
+  } else if (/iPad|iPhone|iPod/.test(ua)) {
+    window.location.href = "https://apps.apple.com/us/app/palpiteiros/id6770614435";
+  } else {
+    window.location.href = "https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros";
+  }
+</script>
