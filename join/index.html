@@ -209,6 +209,13 @@
           return "other";
         }
 
+        function isInAppBrowser() {
+          var ua = navigator.userAgent || "";
+          return /WhatsApp|Instagram|FBAN|FBAV|Line\/|Twitter|LinkedInApp|Snapchat|Pinterest/i.test(
+            ua,
+          );
+        }
+
         function buildDeepLink(code) {
           return APP_SCHEME + "://join/" + encodeURIComponent(code);
         }
@@ -265,6 +272,7 @@
         }
 
         var platform = detectPlatform();
+        var inAppBrowser = isInAppBrowser();
         var deepLink = buildDeepLink(inviteCode);
         var appLikelyOpened = false;
         var fallbackTriggered = false;
@@ -291,10 +299,29 @@
             return;
           }
 
-          window.location.href = deepLink;
+          if (platform === "ios" && inAppBrowser) {
+            statusNode.textContent =
+              "Toque em \"Abrir no app\" para entrar no grupo. Se o app não abrir, baixe na App Store abaixo.";
+            return;
+          }
+
+          if (platform === "ios") {
+            showStoreFallback("ios");
+            statusNode.textContent = "Redirecionando para a App Store…";
+            openAppLink.className = "secondary";
+            downloadAppLink.className = "primary";
+            downloadAppLink.hidden = false;
+            window.setTimeout(function () {
+              redirectToStore("ios");
+            }, 900);
+          }
         }
 
         function scheduleStoreFallback() {
+          if (platform === "ios" && !inAppBrowser) {
+            return;
+          }
+
           window.setTimeout(function () {
             if (appLikelyOpened || document.hidden || fallbackTriggered) {
               return;
@@ -302,15 +329,14 @@
 
             fallbackTriggered = true;
 
-            if (platform === "ios") {
-              showStoreFallback("ios");
-              redirectToStore("ios");
-              return;
-            }
-
             if (platform === "android") {
               showStoreFallback("android");
               redirectToStore("android");
+              return;
+            }
+
+            if (platform === "ios" && inAppBrowser) {
+              showStoreFallback("ios");
               return;
             }
 
