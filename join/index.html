@@ -180,8 +180,8 @@
           "https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros";
         var APP_PACKAGE = "com.paulorvm.palpiteiros";
         var APP_SCHEME = "palpiteiros";
-        var OPEN_APP_DELAY_MS = 150;
-        var FALLBACK_DELAY_MS = 3000;
+        var OPEN_APP_DELAY_MS = 100;
+        var FALLBACK_DELAY_MS = 2500;
 
         var pathSegments = window.location.pathname.split("/").filter(Boolean);
         var joinIndex = pathSegments.indexOf("join");
@@ -199,7 +199,7 @@
         function detectPlatform() {
           var ua = navigator.userAgent || "";
           if (
-            /iPad|iPhone|iPod/.test(ua) ||
+            /iPad|iPhone|iPod/i.test(ua) ||
             (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
           ) {
             return "ios";
@@ -208,23 +208,6 @@
             return "android";
           }
           return "other";
-        }
-
-        function isInAppBrowser() {
-          var ua = navigator.userAgent || "";
-          if (
-            /WhatsApp|Instagram|FBAN|FBAV|Line\/|Twitter|LinkedInApp|Snapchat|Pinterest|Telegram/i.test(
-              ua,
-            )
-          ) {
-            return true;
-          }
-
-          if (/iPhone|iPad|iPod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua) && !/Safari/i.test(ua)) {
-            return true;
-          }
-
-          return false;
         }
 
         function buildDeepLink(code) {
@@ -265,8 +248,17 @@
         }
 
         function redirectToStore(platform) {
-          var storeUrl = platform === "ios" ? STORE_IOS : STORE_ANDROID;
-          window.location.replace(storeUrl);
+          window.location.replace(platform === "ios" ? STORE_IOS : STORE_ANDROID);
+        }
+
+        function scheduleStoreFallback(platform) {
+          window.setTimeout(function () {
+            if (document.visibilityState === "hidden") {
+              return;
+            }
+            showStoreFallback(platform);
+            redirectToStore(platform);
+          }, FALLBACK_DELAY_MS);
         }
 
         if (!inviteCode) {
@@ -283,53 +275,15 @@
         }
 
         var platform = detectPlatform();
-        var inAppBrowser = isInAppBrowser();
         var deepLink = buildDeepLink(inviteCode);
-        var appLikelyOpened = false;
-        var fallbackTriggered = false;
 
         inviteCodeNode.textContent = inviteCode;
         downloadAppLink.href = platform === "ios" ? STORE_IOS : STORE_ANDROID;
+        downloadAppLink.hidden = false;
+        downloadAppLink.textContent =
+          platform === "ios" ? "Baixar na App Store" : "Baixar na Google Play";
 
-        function markAppLikelyOpened() {
-          appLikelyOpened = true;
-        }
-
-        document.addEventListener("visibilitychange", function () {
-          if (document.hidden) {
-            markAppLikelyOpened();
-          }
-        });
-        window.addEventListener("pagehide", markAppLikelyOpened);
-
-        function scheduleStoreFallbackIfStillHere(platform, autoRedirect) {
-          if (fallbackTriggered) {
-            return;
-          }
-
-          window.setTimeout(function () {
-            if (appLikelyOpened || document.hidden || fallbackTriggered) {
-              return;
-            }
-
-            fallbackTriggered = true;
-            showStoreFallback(platform);
-
-            if (autoRedirect) {
-              redirectToStore(platform);
-            }
-          }, FALLBACK_DELAY_MS);
-        }
-
-        function tryOpenIosApp() {
-          if (appLikelyOpened || document.hidden) {
-            return;
-          }
-
-          window.location.href = deepLink;
-        }
-
-        function setupIosFlow() {
+        if (platform === "ios") {
           var meta = document.createElement("meta");
           meta.name = "apple-itunes-app";
           meta.content = "app-id=6770614435, app-argument=" + deepLink;
@@ -337,45 +291,31 @@
 
           openAppLink.href = deepLink;
           openAppLink.textContent = "Abrir no app";
-          openAppLink.className = "primary";
-          openAppLink.addEventListener("click", markAppLikelyOpened);
 
-          downloadAppLink.hidden = false;
-          downloadAppLink.href = STORE_IOS;
-          downloadAppLink.className = "secondary";
-          downloadAppLink.textContent = "Baixar na App Store";
-
-          window.setTimeout(tryOpenIosApp, OPEN_APP_DELAY_MS);
-          scheduleStoreFallbackIfStillHere("ios", !inAppBrowser);
+          scheduleStoreFallback("ios");
+          window.setTimeout(function () {
+            window.location.href = deepLink;
+          }, OPEN_APP_DELAY_MS);
+          return;
         }
 
-        function setupAndroidFlow() {
+        if (platform === "android") {
           var intentUrl = buildAndroidIntent(inviteCode);
           openAppLink.href = intentUrl;
           openAppLink.textContent = "Abrir no app";
 
+          scheduleStoreFallback("android");
           window.setTimeout(function () {
             window.location.href = intentUrl;
           }, OPEN_APP_DELAY_MS);
-
-          scheduleStoreFallbackIfStillHere("android", true);
+          return;
         }
 
-        function setupDesktopFlow() {
-          openAppLink.href = deepLink;
-          openAppLink.textContent = "Tentar abrir no app";
-          headingNode.textContent = "Abra no celular";
-          statusNode.textContent =
-            "Este convite abre no app Palpiteiros. Abra este link no iPhone ou Android, ou baixe o app nas lojas abaixo.";
-        }
-
-        if (platform === "ios") {
-          setupIosFlow();
-        } else if (platform === "android") {
-          setupAndroidFlow();
-        } else {
-          setupDesktopFlow();
-        }
+        openAppLink.href = deepLink;
+        openAppLink.textContent = "Tentar abrir no app";
+        headingNode.textContent = "Abra no celular";
+        statusNode.textContent =
+          "Este convite abre no app Palpiteiros. Abra este link no iPhone ou Android, ou baixe o app nas lojas abaixo.";
       })();
     </script>
   </body>
