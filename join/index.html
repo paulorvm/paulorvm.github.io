@@ -211,9 +211,19 @@
 
         function isInAppBrowser() {
           var ua = navigator.userAgent || "";
-          return /WhatsApp|Instagram|FBAN|FBAV|Line\/|Twitter|LinkedInApp|Snapchat|Pinterest/i.test(
-            ua,
-          );
+          if (
+            /WhatsApp|Instagram|FBAN|FBAV|Line\/|Twitter|LinkedInApp|Snapchat|Pinterest|Telegram/i.test(
+              ua,
+            )
+          ) {
+            return true;
+          }
+
+          if (/iPhone|iPad|iPod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua) && !/Safari/i.test(ua)) {
+            return true;
+          }
+
+          return false;
         }
 
         function buildDeepLink(code) {
@@ -278,7 +288,6 @@
         var fallbackTriggered = false;
 
         inviteCodeNode.textContent = inviteCode;
-        openAppLink.href = deepLink;
         downloadAppLink.href = platform === "ios" ? STORE_IOS : STORE_ANDROID;
 
         function markAppLikelyOpened() {
@@ -293,62 +302,73 @@
         window.addEventListener("pagehide", markAppLikelyOpened);
         window.addEventListener("blur", markAppLikelyOpened);
 
-        function tryOpenApp() {
-          if (platform === "android") {
-            window.location.href = buildAndroidIntent(inviteCode);
-            return;
-          }
-
-          if (platform === "ios" && inAppBrowser) {
-            statusNode.textContent =
-              "Toque em \"Abrir no app\" para entrar no grupo. Se o app não abrir, baixe na App Store abaixo.";
-            return;
-          }
-
-          if (platform === "ios") {
-            showStoreFallback("ios");
-            statusNode.textContent = "Redirecionando para a App Store…";
-            openAppLink.className = "secondary";
-            downloadAppLink.className = "primary";
-            downloadAppLink.hidden = false;
-            window.setTimeout(function () {
-              redirectToStore("ios");
-            }, 900);
-          }
+        function tryOpenDeepLinkOnTap() {
+          markAppLikelyOpened();
+          window.location.href = deepLink;
         }
 
-        function scheduleStoreFallback() {
-          if (platform === "ios" && !inAppBrowser) {
+        function setupIosFlow() {
+          openAppLink.href = "#";
+          openAppLink.textContent = "Já tenho o app — abrir convite";
+          openAppLink.className = "secondary";
+          openAppLink.addEventListener("click", function (event) {
+            event.preventDefault();
+            tryOpenDeepLinkOnTap();
+          });
+
+          downloadAppLink.hidden = false;
+          downloadAppLink.href = STORE_IOS;
+          downloadAppLink.className = "primary";
+          downloadAppLink.textContent = "Baixar na App Store";
+
+          if (inAppBrowser) {
+            headingNode.textContent = "Entre no grupo";
+            statusNode.textContent =
+              "Toque em \"Já tenho o app\" para abrir o convite. Se não tiver o app, baixe na App Store abaixo.";
             return;
           }
+
+          headingNode.textContent = "Instale o Palpiteiros";
+          statusNode.textContent = "Redirecionando para a App Store…";
+          window.setTimeout(function () {
+            redirectToStore("ios");
+          }, 500);
+        }
+
+        function setupAndroidFlow() {
+          var intentUrl = buildAndroidIntent(inviteCode);
+          openAppLink.href = intentUrl;
+          openAppLink.textContent = "Abrir no app";
+
+          window.setTimeout(function () {
+            window.location.href = intentUrl;
+          }, 120);
 
           window.setTimeout(function () {
             if (appLikelyOpened || document.hidden || fallbackTriggered) {
               return;
             }
-
             fallbackTriggered = true;
-
-            if (platform === "android") {
-              showStoreFallback("android");
-              redirectToStore("android");
-              return;
-            }
-
-            if (platform === "ios" && inAppBrowser) {
-              showStoreFallback("ios");
-              return;
-            }
-
-            headingNode.textContent = "Abra no celular";
-            statusNode.textContent =
-              "Este convite abre no app Palpiteiros. Abra este link no iPhone ou Android, ou baixe o app nas lojas abaixo.";
-            openAppLink.textContent = "Tentar abrir no app";
+            showStoreFallback("android");
+            redirectToStore("android");
           }, FALLBACK_DELAY_MS);
         }
 
-        window.setTimeout(tryOpenApp, 120);
-        scheduleStoreFallback();
+        function setupDesktopFlow() {
+          openAppLink.href = deepLink;
+          openAppLink.textContent = "Tentar abrir no app";
+          headingNode.textContent = "Abra no celular";
+          statusNode.textContent =
+            "Este convite abre no app Palpiteiros. Abra este link no iPhone ou Android, ou baixe o app nas lojas abaixo.";
+        }
+
+        if (platform === "ios") {
+          setupIosFlow();
+        } else if (platform === "android") {
+          setupAndroidFlow();
+        } else {
+          setupDesktopFlow();
+        }
       })();
     </script>
   </body>
