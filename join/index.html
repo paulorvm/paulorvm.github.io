@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Palpiteiros — Abrindo convite</title>
+    <title>Palpiteiros — Entrar no grupo</title>
     <meta
       name="description"
-      content="Abra seu convite do bolão no app Palpiteiros ou instale o app para entrar na turma."
+      content="Entre no seu grupo no Palpiteiros. Abra o convite no app ou baixe na App Store ou Google Play."
     />
     <style>
       :root {
@@ -112,6 +112,20 @@
         background: rgba(255, 255, 255, 0.03);
       }
 
+      .store-links {
+        display: grid;
+        gap: 10px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid rgba(140, 185, 168, 0.2);
+      }
+
+      .store-links p {
+        margin: 0 0 4px;
+        font-size: 13px;
+        color: #8cb9a8;
+      }
+
       .muted {
         margin-top: 20px;
         font-size: 13px;
@@ -122,8 +136,8 @@
   <body>
     <main>
       <p class="eyebrow">Palpiteiros</p>
-      <h1>Abrindo seu convite…</h1>
-      <p id="status">Estamos tentando abrir o app para você entrar no bolão.</p>
+      <h1 id="heading">Abrindo seu convite…</h1>
+      <p id="status">Estamos tentando abrir o app para você entrar no grupo.</p>
 
       <div class="card">
         <span class="label">Código do convite</span>
@@ -132,47 +146,183 @@
 
       <div class="actions">
         <a id="open-app" class="primary" href="#">Abrir no app</a>
+        <a id="download-app" class="secondary" href="#" hidden>Baixar o app</a>
         <a id="fallback-home" class="secondary" href="../">Ir para a página inicial</a>
       </div>
 
-      <p class="muted">
-        Se o app não abrir automaticamente, toque no botão acima. Se ainda não tiver o app,
-        publique aqui o link da Play Store ou App Store depois.
+      <div class="store-links">
+        <p>Ainda não tem o app? Baixe nas lojas:</p>
+        <a
+          id="link-ios"
+          class="secondary"
+          href="https://apps.apple.com/app/id6770614435"
+          rel="noopener noreferrer"
+          >App Store (iOS)</a
+        >
+        <a
+          id="link-android"
+          class="secondary"
+          href="https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros"
+          rel="noopener noreferrer"
+          >Google Play (Android)</a
+        >
+      </div>
+
+      <p class="muted" id="footnote">
+        Depois de instalar, volte a este link ou digite o código do convite na aba Entrar do app.
       </p>
     </main>
 
     <script>
       (function () {
-        const pathSegments = window.location.pathname.split("/").filter(Boolean);
-        const joinIndex = pathSegments.indexOf("join");
-        const inviteCodeFromPath = joinIndex >= 0 ? pathSegments[joinIndex + 1] : "";
-        const inviteCodeFromQuery = new URLSearchParams(window.location.search).get("invite") || "";
-        const inviteCode = decodeURIComponent(inviteCodeFromPath || inviteCodeFromQuery || "").trim();
+        var STORE_IOS = "https://apps.apple.com/app/id6770614435";
+        var STORE_ANDROID =
+          "https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros";
+        var APP_PACKAGE = "com.paulorvm.palpiteiros";
+        var APP_SCHEME = "palpiteiros";
+        var FALLBACK_DELAY_MS = 2500;
 
-        const statusNode = document.getElementById("status");
-        const inviteCodeNode = document.getElementById("invite-code");
-        const openAppLink = document.getElementById("open-app");
+        var pathSegments = window.location.pathname.split("/").filter(Boolean);
+        var joinIndex = pathSegments.indexOf("join");
+        var inviteCodeFromPath = joinIndex >= 0 ? pathSegments[joinIndex + 1] : "";
+        var inviteCodeFromQuery = new URLSearchParams(window.location.search).get("invite") || "";
+        var inviteCode = decodeURIComponent(inviteCodeFromPath || inviteCodeFromQuery || "").trim();
+
+        var headingNode = document.getElementById("heading");
+        var statusNode = document.getElementById("status");
+        var inviteCodeNode = document.getElementById("invite-code");
+        var openAppLink = document.getElementById("open-app");
+        var downloadAppLink = document.getElementById("download-app");
+        var footnoteNode = document.getElementById("footnote");
+
+        function detectPlatform() {
+          var ua = navigator.userAgent || "";
+          if (
+            /iPad|iPhone|iPod/.test(ua) ||
+            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+          ) {
+            return "ios";
+          }
+          if (/Android/i.test(ua)) {
+            return "android";
+          }
+          return "other";
+        }
+
+        function buildDeepLink(code) {
+          return APP_SCHEME + "://join/" + encodeURIComponent(code);
+        }
+
+        function buildAndroidIntent(code) {
+          var deepLinkPath = "join/" + encodeURIComponent(code);
+          var fallback = encodeURIComponent(STORE_ANDROID);
+          return (
+            "intent://" +
+            deepLinkPath +
+            "#Intent;scheme=" +
+            APP_SCHEME +
+            ";package=" +
+            APP_PACKAGE +
+            ";S.browser_fallback_url=" +
+            fallback +
+            ";end"
+          );
+        }
+
+        function showStoreFallback(platform) {
+          var storeUrl = platform === "ios" ? STORE_IOS : STORE_ANDROID;
+          var storeLabel = platform === "ios" ? "App Store" : "Google Play";
+
+          headingNode.textContent = "Instale o Palpiteiros";
+          statusNode.textContent =
+            "Não encontramos o app instalado. Baixe na " +
+            storeLabel +
+            " para entrar no grupo com este convite.";
+          downloadAppLink.hidden = false;
+          downloadAppLink.href = storeUrl;
+          downloadAppLink.textContent = "Baixar na " + storeLabel;
+          openAppLink.textContent = "Tentar abrir no app";
+          footnoteNode.textContent =
+            "Depois de instalar, volte a este link ou digite o código do convite na aba Entrar do app.";
+        }
+
+        function redirectToStore(platform) {
+          var storeUrl = platform === "ios" ? STORE_IOS : STORE_ANDROID;
+          window.location.replace(storeUrl);
+        }
 
         if (!inviteCode) {
-          statusNode.textContent = "Este convite está incompleto ou inválido.";
+          headingNode.textContent = "Convite inválido";
+          statusNode.textContent =
+            "Este link está incompleto ou expirou. Peça um novo convite ao administrador do grupo.";
           inviteCodeNode.textContent = "não encontrado";
-          openAppLink.textContent = "Abrir página inicial";
+          openAppLink.textContent = "Ir para a página inicial";
           openAppLink.href = "../";
+          downloadAppLink.hidden = true;
+          footnoteNode.textContent =
+            "Se você já tem o app, abra a aba Entrar e digite o código que recebeu.";
           return;
         }
 
-        const deepLink = "palpiteiros://join/" + encodeURIComponent(inviteCode);
+        var platform = detectPlatform();
+        var deepLink = buildDeepLink(inviteCode);
+        var appLikelyOpened = false;
+        var fallbackTriggered = false;
+
         inviteCodeNode.textContent = inviteCode;
         openAppLink.href = deepLink;
+        downloadAppLink.href = platform === "ios" ? STORE_IOS : STORE_ANDROID;
 
-        window.setTimeout(function () {
+        function markAppLikelyOpened() {
+          appLikelyOpened = true;
+        }
+
+        document.addEventListener("visibilitychange", function () {
+          if (document.hidden) {
+            markAppLikelyOpened();
+          }
+        });
+        window.addEventListener("pagehide", markAppLikelyOpened);
+        window.addEventListener("blur", markAppLikelyOpened);
+
+        function tryOpenApp() {
+          if (platform === "android") {
+            window.location.href = buildAndroidIntent(inviteCode);
+            return;
+          }
+
           window.location.href = deepLink;
-        }, 120);
+        }
 
-        window.setTimeout(function () {
-          statusNode.textContent =
-            "Se o app não abriu, toque em \"Abrir no app\". Depois você pode configurar um fallback para a loja aqui nesta página.";
-        }, 1600);
+        function scheduleStoreFallback() {
+          window.setTimeout(function () {
+            if (appLikelyOpened || document.hidden || fallbackTriggered) {
+              return;
+            }
+
+            fallbackTriggered = true;
+
+            if (platform === "ios") {
+              showStoreFallback("ios");
+              redirectToStore("ios");
+              return;
+            }
+
+            if (platform === "android") {
+              showStoreFallback("android");
+              redirectToStore("android");
+              return;
+            }
+
+            headingNode.textContent = "Abra no celular";
+            statusNode.textContent =
+              "Este convite abre no app Palpiteiros. Abra este link no iPhone ou Android, ou baixe o app nas lojas abaixo.";
+            openAppLink.textContent = "Tentar abrir no app";
+          }, FALLBACK_DELAY_MS);
+        }
+
+        window.setTimeout(tryOpenApp, 120);
+        scheduleStoreFallback();
       })();
     </script>
   </body>
