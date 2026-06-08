@@ -180,7 +180,8 @@
           "https://play.google.com/store/apps/details?id=com.paulorvm.palpiteiros";
         var APP_PACKAGE = "com.paulorvm.palpiteiros";
         var APP_SCHEME = "palpiteiros";
-        var FALLBACK_DELAY_MS = 2500;
+        var OPEN_APP_DELAY_MS = 150;
+        var FALLBACK_DELAY_MS = 3000;
 
         var pathSegments = window.location.pathname.split("/").filter(Boolean);
         var joinIndex = pathSegments.indexOf("join");
@@ -300,22 +301,8 @@
           }
         });
         window.addEventListener("pagehide", markAppLikelyOpened);
-        window.addEventListener("blur", markAppLikelyOpened);
 
-        function tryOpenAppSilently() {
-          var iframe = document.createElement("iframe");
-          iframe.style.display = "none";
-          iframe.setAttribute("aria-hidden", "true");
-          iframe.src = deepLink;
-          document.body.appendChild(iframe);
-          window.setTimeout(function () {
-            if (iframe.parentNode) {
-              iframe.parentNode.removeChild(iframe);
-            }
-          }, 2000);
-        }
-
-        function scheduleIosStoreFallback() {
+        function scheduleStoreFallbackIfStillHere(platform, autoRedirect) {
           if (fallbackTriggered) {
             return;
           }
@@ -326,25 +313,40 @@
             }
 
             fallbackTriggered = true;
-            showStoreFallback("ios");
+            showStoreFallback(platform);
+
+            if (autoRedirect) {
+              redirectToStore(platform);
+            }
           }, FALLBACK_DELAY_MS);
         }
 
+        function tryOpenIosApp() {
+          if (appLikelyOpened || document.hidden) {
+            return;
+          }
+
+          window.location.href = deepLink;
+        }
+
         function setupIosFlow() {
+          var meta = document.createElement("meta");
+          meta.name = "apple-itunes-app";
+          meta.content = "app-id=6770614435, app-argument=" + deepLink;
+          document.head.appendChild(meta);
+
           openAppLink.href = deepLink;
           openAppLink.textContent = "Abrir no app";
           openAppLink.className = "primary";
-          openAppLink.addEventListener("click", function () {
-            markAppLikelyOpened();
-          });
+          openAppLink.addEventListener("click", markAppLikelyOpened);
 
           downloadAppLink.hidden = false;
           downloadAppLink.href = STORE_IOS;
           downloadAppLink.className = "secondary";
           downloadAppLink.textContent = "Baixar na App Store";
 
-          window.setTimeout(tryOpenAppSilently, 120);
-          scheduleIosStoreFallback();
+          window.setTimeout(tryOpenIosApp, OPEN_APP_DELAY_MS);
+          scheduleStoreFallbackIfStillHere("ios", !inAppBrowser);
         }
 
         function setupAndroidFlow() {
@@ -354,16 +356,9 @@
 
           window.setTimeout(function () {
             window.location.href = intentUrl;
-          }, 120);
+          }, OPEN_APP_DELAY_MS);
 
-          window.setTimeout(function () {
-            if (appLikelyOpened || document.hidden || fallbackTriggered) {
-              return;
-            }
-            fallbackTriggered = true;
-            showStoreFallback("android");
-            redirectToStore("android");
-          }, FALLBACK_DELAY_MS);
+          scheduleStoreFallbackIfStillHere("android", true);
         }
 
         function setupDesktopFlow() {
