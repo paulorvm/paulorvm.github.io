@@ -302,37 +302,49 @@
         window.addEventListener("pagehide", markAppLikelyOpened);
         window.addEventListener("blur", markAppLikelyOpened);
 
-        function tryOpenDeepLinkOnTap() {
-          markAppLikelyOpened();
-          window.location.href = deepLink;
+        function tryOpenAppSilently() {
+          var iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.setAttribute("aria-hidden", "true");
+          iframe.src = deepLink;
+          document.body.appendChild(iframe);
+          window.setTimeout(function () {
+            if (iframe.parentNode) {
+              iframe.parentNode.removeChild(iframe);
+            }
+          }, 2000);
+        }
+
+        function scheduleIosStoreFallback() {
+          if (fallbackTriggered) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            if (appLikelyOpened || document.hidden || fallbackTriggered) {
+              return;
+            }
+
+            fallbackTriggered = true;
+            showStoreFallback("ios");
+          }, FALLBACK_DELAY_MS);
         }
 
         function setupIosFlow() {
-          openAppLink.href = "#";
-          openAppLink.textContent = "Já tenho o app — abrir convite";
-          openAppLink.className = "secondary";
-          openAppLink.addEventListener("click", function (event) {
-            event.preventDefault();
-            tryOpenDeepLinkOnTap();
+          openAppLink.href = deepLink;
+          openAppLink.textContent = "Abrir no app";
+          openAppLink.className = "primary";
+          openAppLink.addEventListener("click", function () {
+            markAppLikelyOpened();
           });
 
           downloadAppLink.hidden = false;
           downloadAppLink.href = STORE_IOS;
-          downloadAppLink.className = "primary";
+          downloadAppLink.className = "secondary";
           downloadAppLink.textContent = "Baixar na App Store";
 
-          if (inAppBrowser) {
-            headingNode.textContent = "Entre no grupo";
-            statusNode.textContent =
-              "Toque em \"Já tenho o app\" para abrir o convite. Se não tiver o app, baixe na App Store abaixo.";
-            return;
-          }
-
-          headingNode.textContent = "Instale o Palpiteiros";
-          statusNode.textContent = "Redirecionando para a App Store…";
-          window.setTimeout(function () {
-            redirectToStore("ios");
-          }, 500);
+          window.setTimeout(tryOpenAppSilently, 120);
+          scheduleIosStoreFallback();
         }
 
         function setupAndroidFlow() {
